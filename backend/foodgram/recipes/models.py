@@ -61,8 +61,8 @@ class Recipe(models.Model):
         verbose_name='Название',
     )
     image = models.ImageField(
-        verbose_name="Изображение",
-        upload_to="recipes/images/",
+        verbose_name='Изображение',
+        upload_to='recipes/images/',
     )
     text = models.TextField(
         verbose_name='Описание',
@@ -70,8 +70,8 @@ class Recipe(models.Model):
     ingredients = models.ManyToManyField(
         Ingredient,
         through='RecipeIngredient',
-        related_name='recipes',
-        verbose_name='Ингредиенты'
+        related_name='ingredients',
+        verbose_name='Ингредиенты',
     )
     tags = models.ManyToManyField(
         Tag,
@@ -97,13 +97,13 @@ class RecipeIngredient(models.Model):
     recipe = models.ForeignKey(
         Recipe,
         on_delete=models.CASCADE,
-        related_name='recipes_ingredients',
+        related_name='ingredients_recipe',
         verbose_name='Рецепт',
     )
     ingredient = models.ForeignKey(
         Ingredient,
         on_delete=models.CASCADE,
-        related_name='igredients_recipes',
+        related_name='ingredients_recipe',
         verbose_name='Ингредиент',
     )
     amount = models.PositiveSmallIntegerField(
@@ -115,4 +115,4 @@ class RecipeIngredient(models.Model):
         ordering = ('recipe',)
 
     def __str__(self):
-        return f'{self.recipe} {self.ingredient}'
+        return f'{self.recipe}: {self.ingredient}'

@@ -8,7 +8,7 @@ class User(AbstractUser):
         null=False,
         unique=True,
         verbose_name='email',
-        max_length=254
+        max_length=254,
     )
 
     USERNAME_FIELD = 'email'
