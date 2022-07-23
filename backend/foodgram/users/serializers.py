@@ -1,3 +1,4 @@
+from django.contrib.auth.hashers import make_password
 from drf_extra_fields.fields import Base64ImageField
 from rest_framework import serializers
 
@@ -24,6 +25,31 @@ class UserSerializer(serializers.ModelSerializer):
         if user.is_anonymous:
             return False
         return Subscribe.objects.filter(user=user, author=obj.id).exists()
+
+
+class UserCreateSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = User
+        fields = (
+            'email',
+            'id',
+            'username',
+            'first_name',
+            'last_name',
+            'password',
+        )
+        extra_kwargs = {'password': {'write_only': True}}
+
+    def create(self, validated_data):
+        user = User.objects.create(
+            email=validated_data['email'],
+            username=validated_data['username'],
+            first_name=validated_data['first_name'],
+            last_name=validated_data['last_name'],
+            password=make_password(validated_data['password'])
+        )
+        return user
 
 
 class AuthorRecipesSerializer(serializers.ModelSerializer):

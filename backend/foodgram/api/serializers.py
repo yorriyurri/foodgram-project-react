@@ -1,4 +1,5 @@
 from drf_extra_fields.fields import Base64ImageField
+from django.shortcuts import get_object_or_404
 from rest_framework import serializers
 
 from recipes.models import Ingredient, Recipe, RecipeIngredient, Tag
@@ -30,9 +31,9 @@ class RecipeIngredientSerializer(serializers.ModelSerializer):
 
 class RecipeSerializer(serializers.ModelSerializer):
     tags = TagSerializer(many=True)
-    author = UserSerializer()
+    author = UserSerializer(read_only=True)
     ingredients = RecipeIngredientSerializer(
-        many=True, source='ingredients_recipe'
+        many=True, source='recipes_ingredients'
     )
     image = Base64ImageField()
 
@@ -41,3 +42,45 @@ class RecipeSerializer(serializers.ModelSerializer):
         fields = ('id', 'tags', 'author', 'ingredients',
                   'name', 'image', 'text', 'cooking_time')
         read_only_fields = ('author',)
+
+
+class IngredoentForRecipeSerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField()
+
+    class Meta:
+        model = RecipeIngredient
+        fields = ['id', 'amount']
+
+
+class RecipeCreateSerializer(serializers.ModelSerializer):
+    ingredients = IngredoentForRecipeSerializer(many=True)
+    tags = serializers.PrimaryKeyRelatedField(
+                                              many=True,
+                                              queryset=Tag.objects.all()
+    )
+    author = UserSerializer(read_only=True)
+    image = Base64ImageField()
+
+    class Meta:
+        model = Recipe
+        fields = ('id', 'tags', 'author', 'ingredients',
+                  'name', 'image', 'text', 'cooking_time')
+        read_only_fields = ('author',)
+
+    def create(self, validated_data):
+        taken_ingredients = validated_data.pop('ingredients')
+        tags = validated_data.pop('tags')
+        recipe = Recipe.objects.create(**validated_data)
+        recipe.tags.set(tags)
+        for ingredient in taken_ingredients:
+            its_ingredient = get_object_or_404(Ingredient, id=ingredient['id'])
+            RecipeIngredient.objects.create(
+                ingredient=its_ingredient,
+                recipe=recipe,
+                amount=ingredient['amount']
+            )
+        return recipe
+
+    def to_representation(self, instance):
+        serializer = RecipeSerializer(instance, context=self.context)
+        return serializer.data
