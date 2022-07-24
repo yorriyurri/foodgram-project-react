@@ -32,24 +32,20 @@ class RecipeViewSet(viewsets.ModelViewSet):
             return RecipeSerializer
         return RecipeCreateSerializer
 
-    def add_recipe(self, obj, user, id):
-        recipe = obj.objects.filter(user=user, recipe__id=id)
-        if recipe.exists():
+    def for_responses(self, request, obj, id):
+        item = obj.objects.filter(user=request.user, recipe__id=id)
+        if (request.method == 'POST') and (not item.exists()):
+            recipe = get_object_or_404(Recipe, id=id)
+            obj.objects.create(user=request.user, recipe=recipe)
+            serializer = RecipeCreateSerializer(recipe)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        elif (request.method == 'DELETE') and (item.exists()):
+            item.delete()
             return Response(
-                {'errors': 'Рецепт цже создан.'},
-                status=status.HTTP_400_BAD_REQUEST,
+                {'success': 'Рецепт успешно удален.'},
+                status=status.HTTP_204_NO_CONTENT
             )
-        recipe = get_object_or_404(Recipe, id=id)
-        obj.objects.create(user=user, recipe=recipe)
-        serializer = RecipeCreateSerializer(recipe)
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
-
-    def delete_recipe(self, obj, user, id):
-        recipe = obj.objects.filter(user=user, recipe__id=id)
-        if recipe.exists():
-            recipe.delete()
-            return Response(status=status.HTTP_204_NO_CONTENT)
         return Response(
-            {'errors': 'Объект не найден.'},
-            status=status.HTTP_404_NOT_FOUND,
+            {'errors': 'Ошибка валидации.'},
+            status=status.HTTP_400_BAD_REQUEST,
         )

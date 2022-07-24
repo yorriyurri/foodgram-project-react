@@ -15,14 +15,25 @@ class IngredientAdmin(admin.ModelAdmin):
     search_fields = ('name',)
 
 
+# class RecipeIngredientInline(admin.TabularInline):
+#     model = RecipeIngredient
+#     extra = 1
+
+
 class RecipeAdmin(admin.ModelAdmin):
     list_display = ('name', 'author')
     empty_value_display = '-пусто-'
     list_filter = ('name', 'author', 'tags')
     search_fields = ('name', 'author', 'tags')
+    # inlines = (RecipeIngredientInline,)
+
+
+# class RecipeIngredientAdmin(admin.ModelAdmin):
+#     inlines = (RecipeIngredientInline,)
 
 
 admin.site.register(Tag, TagAdmin)
 admin.site.register(Ingredient, IngredientAdmin)
 admin.site.register(Recipe, RecipeAdmin)
 admin.site.register(RecipeIngredient)
+# admin.site.register(RecipeIngredient, RecipeIngredientAdmin)
