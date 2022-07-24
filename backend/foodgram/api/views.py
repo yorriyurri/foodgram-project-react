@@ -1,11 +1,12 @@
 from django.shortcuts import get_object_or_404
 from rest_framework import filters, status, viewsets
-from rest_framework.permissions import SAFE_METHODS
+from rest_framework.permissions import SAFE_METHODS, IsAuthenticated
 from rest_framework.response import Response
 
-from .serializers import (IngredientSerializer, RecipeCreateSerializer,
-                          RecipeSerializer, TagSerializer)
-from recipes.models import Ingredient, Recipe, Tag
+from .serializers import (IngredientSerializer, MinInfoRecipeSerializer,
+                          RecipeCreateSerializer, RecipeSerializer,
+                          TagSerializer)
+from recipes.models import Favorite, Ingredient, Recipe, ShoppingCart, Tag
 
 
 class TagViewSet(viewsets.ReadOnlyModelViewSet):
@@ -49,3 +50,75 @@ class RecipeViewSet(viewsets.ModelViewSet):
             {'errors': 'Ошибка валидации.'},
             status=status.HTTP_400_BAD_REQUEST,
         )
+
+
+class FavoriteViewSet(viewsets.ModelViewSet):
+    serializer_class = MinInfoRecipeSerializer
+    queryset = Favorite.objects.all()
+    permission_classes = [IsAuthenticated]
+
+    def create(self, request, *args, **kwargs):
+        recipe_id = self.kwargs['id']
+        recipe = get_object_or_404(Recipe, id=recipe_id)
+        if Favorite.objects.filter(
+            user=request.user,
+            recipe__id=recipe_id
+        ).exists():
+            return Response(
+                {'errors': 'Рецепт уже добавлен в избранное.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        Favorite.objects.create(user=request.user, recipe=recipe)
+        serializer = MinInfoRecipeSerializer()
+        return Response(serializer.to_representation(instance=recipe),
+                        status=status.HTTP_201_CREATED)
+
+    def destroy(self, request, *args, **kwargs):
+        recipe_id = self.kwargs['id']
+        del_object = Favorite.objects.filter(
+            user=request.user,
+            recipe__id=recipe_id,
+        )
+        if del_object.exists():
+            del_object.delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        return Response(
+                    {'errors': 'Рецепт не был добавлен в избранное.'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+
+class ShoppingCartViewSet(viewsets.ModelViewSet):
+    serializer_class = MinInfoRecipeSerializer
+    queryset = ShoppingCart.objects.all()
+    permission_classes = [IsAuthenticated]
+
+    def create(self, request, *args, **kwargs):
+        recipe_id = self.kwargs['id']
+        recipe = get_object_or_404(Recipe, id=recipe_id)
+        if ShoppingCart.objects.filter(
+            user=request.user,
+            recipe__id=recipe_id
+        ).exists():
+            return Response(
+                {'errors': 'Рецепт уже добавлен в корзину.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        ShoppingCart.objects.create(user=request.user, recipe=recipe)
+        serializer = MinInfoRecipeSerializer()
+        return Response(serializer.to_representation(instance=recipe),
+                        status=status.HTTP_201_CREATED)
+
+    def destroy(self, request, *args, **kwargs):
+        recipe_id = self.kwargs['id']
+        del_object = ShoppingCart.objects.filter(
+            user=request.user,
+            recipe__id=recipe_id,
+        )
+        if del_object.exists():
+            del_object.delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        return Response(
+                    {'errors': 'Рецепт не был добавлен в корзину.'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )

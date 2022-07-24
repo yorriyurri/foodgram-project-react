@@ -2,7 +2,8 @@ from drf_extra_fields.fields import Base64ImageField
 from django.shortcuts import get_object_or_404
 from rest_framework import serializers
 
-from recipes.models import Ingredient, Recipe, RecipeIngredient, Tag
+from recipes.models import (Favorite, Ingredient, Recipe, RecipeIngredient,
+                            ShoppingCart, Tag)
 from users.serializers import UserSerializer
 
 
@@ -35,13 +36,32 @@ class RecipeSerializer(serializers.ModelSerializer):
     ingredients = RecipeIngredientSerializer(
         many=True, source='recipes_ingredients'
     )
+    is_favorited = serializers.SerializerMethodField()
+    is_in_shopping_cart = serializers.SerializerMethodField()
     image = Base64ImageField()
 
     class Meta:
         model = Recipe
         fields = ('id', 'tags', 'author', 'ingredients',
+                  'is_favorited', 'is_in_shopping_cart',
                   'name', 'image', 'text', 'cooking_time')
         read_only_fields = ('author',)
+
+    def get_is_favorited(self, recipe):
+        user = self.context.get('request').user
+        if user.is_authenticated and Favorite.objects.filter(user=user,
+                                                             recipe=recipe
+                                                             ).exists():
+            return True
+        return False
+
+    def get_is_in_shopping_cart(self, recipe):
+        user = self.context.get('request').user
+        if (user.is_authenticated and ShoppingCart.objects.filter(user=user,
+                                                                  recipe=recipe
+                                                                  ).exists()):
+            return True
+        return False
 
 
 class IngredoentForRecipeSerializer(serializers.ModelSerializer):
@@ -141,3 +161,11 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         serializer = RecipeSerializer(instance, context=self.context)
         return serializer.data
+
+
+class MinInfoRecipeSerializer(serializers.ModelSerializer):
+    image = Base64ImageField()
+
+    class Meta:
+        model = Recipe
+        fields = ['id', 'name', 'image', 'cooking_time']
