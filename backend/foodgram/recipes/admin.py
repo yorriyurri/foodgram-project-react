@@ -22,11 +22,15 @@ class IngredientAdmin(admin.ModelAdmin):
 
 
 class RecipeAdmin(admin.ModelAdmin):
-    list_display = ('name', 'author')
+    list_display = ('name', 'author', 'count_of_favorites')
     empty_value_display = '-пусто-'
     list_filter = ('name', 'author', 'tags')
     search_fields = ('name', 'author', 'tags')
     # inlines = (RecipeIngredientInline,)
+
+    def count_of_favorites(self, obj):
+        return obj.favorites.count()
+    count_of_favorites.short_description = 'счетчик добавлений в избранное'
 
 
 # class RecipeIngredientAdmin(admin.ModelAdmin):
@@ -37,6 +41,9 @@ admin.site.register(Tag, TagAdmin)
 admin.site.register(Ingredient, IngredientAdmin)
 admin.site.register(Recipe, RecipeAdmin)
 admin.site.register(RecipeIngredient)
+# admin.site.register(RecipeIngredient, RecipeIngredientAdmin)
 admin.site.register(Favorite)
 admin.site.register(ShoppingCart)
-# admin.site.register(RecipeIngredient, RecipeIngredientAdmin)
+
+# Разобраться, почему все работало два дня назад. Ошибка:
+# <class 'recipes.admin.RecipeIngredientInline'>: (admin.E202) 'recipes.RecipeIngredient' has no ForeignKey to 'recipes.RecipeIngredient'.
