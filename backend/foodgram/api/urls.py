@@ -19,7 +19,7 @@ urlpatterns = [
          SubscribeViewSet.as_view({'get': 'list'}), name='subscriptions'),
     path('', include('djoser.urls')),
     path('auth/', include('djoser.urls.authtoken')),
-    path('users/<id>/subscribe/',
+    path('users/<int:id>/subscribe/',
          SubscribeViewSet.as_view({'post': 'create',
                                    'delete': 'destroy'}), name='subscribe'),
     path('recipes/<int:id>/favorite/',
