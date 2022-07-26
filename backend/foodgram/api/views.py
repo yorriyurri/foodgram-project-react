@@ -1,3 +1,4 @@
+from django.db.models import Sum
 from django_filters.rest_framework import DjangoFilterBackend
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
@@ -11,8 +12,7 @@ from .permissions import IsAuthorReadOnly
 from .serializers import (IngredientSerializer, MinInfoRecipeSerializer,
                           RecipeCreateSerializer, RecipeSerializer,
                           TagSerializer)
-from recipes.models import (Favorite, Ingredient, Recipe, RecipeIngredient,
-                            ShoppingCart, Tag)
+from recipes.models import (Favorite, Ingredient, Recipe, ShoppingCart, Tag)
 
 
 class TagViewSet(viewsets.ReadOnlyModelViewSet):
@@ -43,23 +43,23 @@ class RecipeViewSet(viewsets.ModelViewSet):
             return RecipeSerializer
         return RecipeCreateSerializer
 
-    def for_responses(self, request, obj, id):
-        item = obj.objects.filter(user=request.user, recipe__id=id)
-        if (request.method == 'POST') and (not item.exists()):
-            recipe = get_object_or_404(Recipe, id=id)
-            obj.objects.create(user=request.user, recipe=recipe)
-            serializer = RecipeCreateSerializer(recipe)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        elif (request.method == 'DELETE') and (item.exists()):
-            item.delete()
-            return Response(
-                {'success': 'Рецепт успешно удален.'},
-                status=status.HTTP_204_NO_CONTENT
-            )
-        return Response(
-            {'errors': 'Ошибка валидации.'},
-            status=status.HTTP_400_BAD_REQUEST,
-        )
+    # def for_responses(self, request, obj, id):
+    #     item = obj.objects.filter(user=request.user, recipe__id=id)
+    #     if (request.method == 'POST') and (not item.exists()):
+    #         recipe = get_object_or_404(Recipe, id=id)
+    #         obj.objects.create(user=request.user, recipe=recipe)
+    #         serializer = RecipeCreateSerializer(recipe)
+    #         return Response(serializer.data, status=status.HTTP_201_CREATED)
+    #     elif (request.method == 'DELETE') and (item.exists()):
+    #         item.delete()
+    #         return Response(
+    #             {'success': 'Рецепт успешно удален.'},
+    #             status=status.HTTP_204_NO_CONTENT
+    #         )
+    #     return Response(
+    #         {'errors': 'Ошибка валидации.'},
+    #         status=status.HTTP_400_BAD_REQUEST,
+    #     )
 
     @action(
         detail=False,
@@ -67,33 +67,25 @@ class RecipeViewSet(viewsets.ModelViewSet):
         permission_classes=[IsAuthenticated]
     )
     def download_shopping_cart(self, request):
-        ingredients = RecipeIngredient.objects.filter(
-            recipe__shopping_cart__user=request.user
-        ).values_list(
-            'ingredient__name',
-            'ingredient__measurement_unit',
-            'amount'
+        recipes = Recipe.objects.filter(
+            shopping_cart__in=ShoppingCart.objects.filter(user=request.user)
         )
-        shopping_list = {}
-        for ingredient in ingredients:
-            name = ingredient[0]
-            if name not in shopping_list:
-                shopping_list[name] = {
-                    'measurement_unit': ingredient[1],
-                    'amount': ingredient[2]
-                }
-            else:
-                shopping_list[name]['amount'] += ingredient[2]
-        buying_list = 'Список покупок:\n'
-        for number, (ingredient, value) in enumerate(
-            shopping_list.items(), start=1
-        ):
-            buying_list += (
-                f"{number}. {ingredient} - {value['amount']} "
-                f"{value['measurement_unit']}\n"
+        ingredients = Ingredient.objects.filter(
+            recipes_ingredients__recipe__in=recipes
+        ).annotate(
+            total_amount=Sum('recipes_ingredients__amount')
+        )
+        print(str(ingredients))
+        shopping_cart = 'Список покупок:\n'
+        for number, ingredient in enumerate(ingredients, start=1):
+            print(type(ingredient))
+            shopping_cart += (
+                f"{number}. {ingredient.name} - "
+                f"{ingredient.total_amount} "
+                f"{ingredient.measurement_unit}\n"
             )
-        spisok = 'buying_list.txt'
-        response = HttpResponse(buying_list, content_type='text/plain')
+        spisok = 'shopping_cart.txt'
+        response = HttpResponse(shopping_cart, content_type='text/plain')
         response['Content-Disposition'] = (f'attachment; filename={spisok}')
         return response
 
