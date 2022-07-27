@@ -33,7 +33,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
     queryset = Recipe.objects.order_by('-id')
     filter_backends = (DjangoFilterBackend,)
     filterset_class = RecipeFilter
-    permission_classes = [IsAuthorReadOnly]
+    permission_classes = (IsAuthorReadOnly,)
 
     def perform_create(self, serializer):
         return serializer.save(author=self.request.user)
@@ -43,28 +43,10 @@ class RecipeViewSet(viewsets.ModelViewSet):
             return RecipeSerializer
         return RecipeCreateSerializer
 
-    # def for_responses(self, request, obj, id):
-    #     item = obj.objects.filter(user=request.user, recipe__id=id)
-    #     if (request.method == 'POST') and (not item.exists()):
-    #         recipe = get_object_or_404(Recipe, id=id)
-    #         obj.objects.create(user=request.user, recipe=recipe)
-    #         serializer = RecipeCreateSerializer(recipe)
-    #         return Response(serializer.data, status=status.HTTP_201_CREATED)
-    #     elif (request.method == 'DELETE') and (item.exists()):
-    #         item.delete()
-    #         return Response(
-    #             {'success': 'Рецепт успешно удален.'},
-    #             status=status.HTTP_204_NO_CONTENT
-    #         )
-    #     return Response(
-    #         {'errors': 'Ошибка валидации.'},
-    #         status=status.HTTP_400_BAD_REQUEST,
-    #     )
-
     @action(
         detail=False,
         methods=['GET'],
-        permission_classes=[IsAuthenticated]
+        permission_classes=(IsAuthenticated,)
     )
     def download_shopping_cart(self, request):
         recipes = Recipe.objects.filter(
@@ -75,7 +57,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
         ).annotate(
             total_amount=Sum('recipes_ingredients__amount')
         )
-        print(str(ingredients))
         shopping_cart = 'Список покупок:\n'
         for number, ingredient in enumerate(ingredients, start=1):
             print(type(ingredient))
@@ -89,74 +70,39 @@ class RecipeViewSet(viewsets.ModelViewSet):
         response['Content-Disposition'] = (f'attachment; filename={spisok}')
         return response
 
-
-class FavoriteViewSet(viewsets.ModelViewSet):
-    serializer_class = MinInfoRecipeSerializer
-    queryset = Favorite.objects.all()
-    permission_classes = [IsAuthenticated]
-
-    def create(self, request, *args, **kwargs):
-        recipe_id = self.kwargs['id']
-        recipe = get_object_or_404(Recipe, id=recipe_id)
-        if Favorite.objects.filter(
-            user=request.user,
-            recipe__id=recipe_id
-        ).exists():
-            return Response(
-                {'errors': 'Рецепт уже добавлен в избранное.'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        Favorite.objects.create(user=request.user, recipe=recipe)
-        serializer = MinInfoRecipeSerializer()
-        return Response(serializer.to_representation(instance=recipe),
-                        status=status.HTTP_201_CREATED)
-
-    def destroy(self, request, *args, **kwargs):
-        recipe_id = self.kwargs['id']
-        del_object = Favorite.objects.filter(
-            user=request.user,
-            recipe__id=recipe_id,
-        )
-        if del_object.exists():
-            del_object.delete()
+    def create_or_destroy(self, request, model, id):
+        recipe = get_object_or_404(Recipe, id=id)
+        object = model.objects.filter(user=request.user, recipe__id=recipe.id)
+        if request.method == 'POST':
+            if object.exists():
+                return Response(
+                    {'errors': 'Рецепт не был добавлен ранее.'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            model.objects.create(user=request.user, recipe=recipe)
+            serializer = MinInfoRecipeSerializer()
+            return Response(serializer.to_representation(instance=recipe),
+                            status=status.HTTP_201_CREATED)
+        if object.exists():
+            object.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
         return Response(
-                    {'errors': 'Рецепт не был добавлен в избранное.'},
+                    {'errors': 'Рецепт не был добавлен ранее.'},
                     status=status.HTTP_400_BAD_REQUEST
                 )
 
+    @action(
+        detail=True,
+        methods=('post', 'delete'),
+        permission_classes=(IsAuthenticated,)
+    )
+    def favorite(self, request, pk=None):
+        return self.create_or_destroy(request, Favorite, pk)
 
-class ShoppingCartViewSet(viewsets.ModelViewSet):
-    serializer_class = MinInfoRecipeSerializer
-    queryset = ShoppingCart.objects.all()
-    permission_classes = [IsAuthenticated]
-
-    def create(self, request, *args, **kwargs):
-        recipe_id = self.kwargs['id']
-        recipe = get_object_or_404(Recipe, id=recipe_id)
-        if ShoppingCart.objects.filter(
-            user=request.user,
-            recipe__id=recipe_id
-        ).exists():
-            return Response(
-                {'errors': 'Рецепт уже добавлен в корзину.'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        ShoppingCart.objects.create(user=request.user, recipe=recipe)
-        serializer = MinInfoRecipeSerializer()
-        return Response(serializer.to_representation(instance=recipe),
-                        status=status.HTTP_201_CREATED)
-
-    def destroy(self, request, *args, **kwargs):
-        recipe_id = self.kwargs['id']
-        del_object = ShoppingCart.objects.filter(
-            user=request.user,
-            recipe__id=recipe_id,
-        )
-        if del_object.exists():
-            del_object.delete()
-            return Response(status=status.HTTP_204_NO_CONTENT)
-        return Response(
-                    {'errors': 'Рецепт не был добавлен в корзину.'},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
+    @action(
+        detail=True,
+        methods=('post', 'delete'),
+        permission_classes=(IsAuthenticated,)
+    )
+    def shopping_cart(self, request, pk=None):
+        return self.create_or_destroy(request, ShoppingCart, pk)
