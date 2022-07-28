@@ -10,6 +10,7 @@ services:
   web:
     build:
       context: ../backend
+      dockerfile: Dockerfile
     restart: always
     volumes:
       - backend_static:/app/backend_static/
@@ -17,7 +18,7 @@ services:
     depends_on:
       - db
     env_file:
-      - ./.env
+      - ../backend/.env
 
   frontend:
     build:
