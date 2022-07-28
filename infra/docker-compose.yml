@@ -1,5 +1,23 @@
 version: '3.3'
 services:
+  db:
+    image: postgres:13.0-alpine
+    volumes:
+      - db:/var/lib/postgresql/data/
+    env_file:
+      - ./.env
+
+  web:
+    build:
+      context: ../backend
+    restart: always
+    volumes:
+      - static_valut:/app/backend_static/
+      - media_value:/app/media/
+    depends_on:
+      - db
+    env_file:
+      - ./.env
 
   frontend:
     build:
@@ -14,4 +32,15 @@ services:
     volumes:
       - ./nginx.conf:/etc/nginx/conf.d/default.conf
       - ../frontend/build:/usr/share/nginx/html/
-      - ../docs/:/usr/share/nginx/html/api/docs/
+      - ../docs/redoc.html:/usr/share/nginx/html/api/docs/redoc.html
+      - ../docs/openapi-schema.yml:/usr/share/nginx/html/api/docs/openapi-schema.yml
+      - backend_static:/usr/share/nginx/html/backend_static/:ro
+      - media_value:/usr/share/nginx/html/media/:ro
+    depends_on:
+      - web
+
+
+volumes:
+  postgress_data:
+  backend_static:
+  media_value:
