@@ -13,7 +13,6 @@ services:
       dockerfile: Dockerfile
     restart: always
     volumes:
-      - ../data/:/backend/data/
       - backend_static:/app/backend_static/
       - media_value:/app/media/
     depends_on:
