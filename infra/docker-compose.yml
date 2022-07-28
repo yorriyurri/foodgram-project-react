@@ -12,7 +12,7 @@ services:
       context: ../backend
     restart: always
     volumes:
-      - static_valut:/app/backend_static/
+      - backend_static:/app/backend_static/
       - media_value:/app/media/
     depends_on:
       - db
@@ -25,6 +25,7 @@ services:
       dockerfile: Dockerfile
     volumes:
       - ../frontend/:/app/result_build/
+
   nginx:
     image: nginx:1.19.3
     ports:
@@ -41,6 +42,6 @@ services:
 
 
 volumes:
-  postgress_data:
+  db:
   backend_static:
   media_value:
