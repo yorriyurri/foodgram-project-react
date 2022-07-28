@@ -129,18 +129,23 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError('Добавьте время приготовления.')
         return cooking_time
 
+    def adding_ingredients(self, ingredients, recipe):
+        all_ingredients = []
+        for ingredient in ingredients:
+            its_ingredient = get_object_or_404(Ingredient, id=ingredient['id'])
+            amount = ingredient['amount']
+            all_ingredients.append(
+                RecipeIngredient(ingredient=its_ingredient,
+                                 recipe=recipe,
+                                 amount=amount))
+        RecipeIngredient.objects.bulk_create(all_ingredients)
+
     def create(self, validated_data):
         taken_ingredients = validated_data.pop('ingredients')
         tags = validated_data.pop('tags')
         recipe = Recipe.objects.create(**validated_data)
         recipe.tags.set(tags)
-        for ingredient in taken_ingredients:
-            its_ingredient = get_object_or_404(Ingredient, id=ingredient['id'])
-            RecipeIngredient.objects.create(
-                ingredient=its_ingredient,
-                recipe=recipe,
-                amount=ingredient['amount']
-            )
+        self.adding_ingredients(taken_ingredients, recipe)
         return recipe
 
     def update(self, recipe, validated_data):
@@ -149,13 +154,7 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
         recipe = super().update(recipe, validated_data)
         recipe.tags.set(tags)
         recipe.ingredients.clear()
-        for ingredient in taken_ingredients:
-            its_ingredient = get_object_or_404(Ingredient, id=ingredient['id'])
-            RecipeIngredient.objects.create(
-                ingredient=its_ingredient,
-                recipe=recipe,
-                amount=ingredient['amount']
-            )
+        self.adding_ingredients(taken_ingredients, recipe)
         return recipe
 
     def to_representation(self, instance):
