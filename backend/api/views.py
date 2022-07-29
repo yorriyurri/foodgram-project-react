@@ -7,7 +7,7 @@ from rest_framework.decorators import action
 from rest_framework.permissions import SAFE_METHODS, IsAuthenticated
 from rest_framework.response import Response
 
-from .filters import IngredientSearchFilter, RecipeFilter
+from .filters import IngredientFilter, RecipeFilter
 from .paginations import RecipesPagination
 from .permissions import IsAdminOrReadOnly, IsAuthorReadOnly
 from .serializers import (IngredientSerializer, MinInfoRecipeSerializer,
@@ -27,7 +27,8 @@ class IngredientsViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = IngredientSerializer
     pagination_class = None
     permission_classes = (IsAdminOrReadOnly,)
-    filterset_class = IngredientSearchFilter
+    # filterset_class = IngredientSearchFilter
+    filter_backends = [IngredientFilter]
     search_fields = ('^name',)
 
 
