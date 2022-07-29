@@ -8,9 +8,7 @@ services:
       - ../backend/.env
 
   web:
-    build:
-      context: ../backend
-      dockerfile: Dockerfile
+    image: yorriyurri/foodgram_project:latest
     restart: always
     volumes:
       - ../data/:/app/data/
@@ -22,11 +20,11 @@ services:
       - ../backend/.env
 
   frontend:
-    build:
-      context: ../frontend
-      dockerfile: Dockerfile
+    image: merkulovai/foodgram_project_frontend:latest
     volumes:
       - ../frontend/:/app/result_build/
+    depends_on:
+      - web
 
   nginx:
     image: nginx:1.19.3
