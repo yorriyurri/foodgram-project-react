@@ -32,7 +32,6 @@ class IngredientsViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
-    serializer_class = RecipeSerializer
     queryset = Recipe.objects.order_by('-id')
     filter_backends = (DjangoFilterBackend,)
     filterset_class = RecipeFilter
