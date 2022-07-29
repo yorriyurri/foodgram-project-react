@@ -10,7 +10,12 @@ SECRET_KEY = os.getenv('SECRET_KEY', default='2!4itka3+ub%--aq+w$25)9z9yzaksp@($
 
 DEBUG = False
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = [
+    '127.0.0.1',
+    '51.250.107.24',
+    'localhost',
+    'web',
+]
 
 AUTH_USER_MODEL = 'users.User'
 

@@ -131,11 +131,7 @@ dmypy.json
 # .idea
 .idea
 
-<<<<<<< HEAD
-# Папки со статикой и медиа
+# Папки static и media
 static/
 backend/foodgram/static/
-=======
-# Папки static и media
->>>>>>> f87597abce22ea8fe6e479edca1a12bc76ba3987
-backend/foodgram/media/
+backend/media/
