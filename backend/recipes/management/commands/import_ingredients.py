@@ -12,15 +12,9 @@ class Command(BaseCommand):
             'data/ingredients.json', encoding='utf-8'
         ) as json_file:
             ingredients = json.load(json_file)
-            for ingredient in ingredients:
-                name = ingredient['name']
-                measurement_unit = ingredient['measurement_unit']
-                Ingredient.objects.create(
-                    name=name,
-                    measurement_unit=measurement_unit
-                )
-
-
-app = Command()
-app.handle()
-print('Ингредиенты успешно добавлены.')
+            for row in ingredients:
+                ingredient = Ingredient()
+                ingredient.name = row['name']
+                ingredient.measurement_unit = row['measurement_unit']
+                ingredient.save()
+        print('Ингредиенты успешно добавлены.')
