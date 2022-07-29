@@ -1,4 +1,5 @@
 # Foodgram - «Продуктовый помощник»
+[![Django-app workflow](https://github.com/yorriyurri/foodgram-project-react/actions/workflows/foodgram-project-react_workflow.yml/badge.svg)](https://github.com/yorriyurri/foodgram-project-react/actions/workflows/foodgram-project-react_workflow.yml)
 
 Foodgram, «Продуктовый помощник» - онлайн-сервис и API для него.
 
