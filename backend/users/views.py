@@ -43,6 +43,6 @@ class SubscribeViewSet(viewsets.ModelViewSet):
             del_subscribe.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
         return Response(
-                    {'errors': 'Вы не были подписаны на автора'},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
+            {'errors': 'Вы не были подписаны на автора'},
+            status=status.HTTP_400_BAD_REQUEST
+        )

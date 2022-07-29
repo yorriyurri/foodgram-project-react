@@ -91,9 +91,9 @@ class RecipeViewSet(viewsets.ModelViewSet):
             object.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
         return Response(
-                    {'errors': 'Рецепт не был добавлен ранее.'},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
+            {'errors': 'Рецепт не был добавлен ранее.'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
 
     @action(
         detail=True,
