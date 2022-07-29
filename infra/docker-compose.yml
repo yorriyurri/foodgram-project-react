@@ -9,7 +9,7 @@ services:
       - ./.env
 
   web:
-    image: yorriyurri/foodgram_project:latest
+    image: yorriyurri/foodgram_project:v2_1
     restart: always
     volumes:
       - ../data/:/app/data/

@@ -45,7 +45,7 @@ jobs:
           context: ./backend
           file: ./backend/Dockerfile
           push: true
-          tags: ${{ secrets.DOCKER_USERNAME }}/foodgram_project:latest
+          tags: ${{ secrets.DOCKER_USERNAME }}/foodgram_project:v2_1
 
   deploy:
     runs-on: ubuntu-latest
@@ -66,8 +66,8 @@ jobs:
           script: |
             sudo docker-compose stop
             sudo docker-compose rm web
-            sudo docker-compose pull ${{ secrets.DOCKER_USERNAME }}/foodgram_project:latest
-            sudo docker-compose pull ${{ secrets.DOCKER_USERNAME }}/foodgram_project_frontend:latest
+            sudo docker-compose pull ${{ secrets.DOCKER_USERNAME }}/foodgram_project:v2_1
+            sudo docker-compose pull ${{ secrets.DOCKER_USERNAME }}/foodgram_project_frontend:v1
             touch .env
             echo DB_ENGINE=${{ secrets.DB_ENGINE }} >> .env
             echo DB_NAME=${{ secrets.DB_NAME }} >> .env
