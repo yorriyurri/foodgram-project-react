@@ -77,10 +77,10 @@ docker-compose exec web python manage.py collectstatic --no-input
 docker-compose exec web python manage.py import_ingredients
 ```
 
-## Примеры
+### Подключение
 
-Подробная документация API с примерами размещена по адресу:
-http://localhost/api/docs/
+Проект доступен по адресу:
+http://51.250.107.24/
 
 ## Автор
 
