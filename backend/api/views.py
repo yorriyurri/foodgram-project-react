@@ -2,7 +2,6 @@ from django.db.models import Sum
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
-from recipes.models import Favorite, Ingredient, Recipe, ShoppingCart, Tag
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import SAFE_METHODS, IsAuthenticated
@@ -14,6 +13,7 @@ from .permissions import IsAdminOrReadOnly, IsAuthorReadOnly
 from .serializers import (IngredientSerializer, MinInfoRecipeSerializer,
                           RecipeCreateSerializer, RecipeSerializer,
                           TagSerializer)
+from recipes.models import Favorite, Ingredient, Recipe, ShoppingCart, Tag
 
 
 class TagViewSet(viewsets.ReadOnlyModelViewSet):
@@ -63,22 +63,25 @@ class RecipeViewSet(viewsets.ModelViewSet):
         )
         shopping_cart = 'Список покупок:\n'
         for number, ingredient in enumerate(ingredients, start=1):
-            print(type(ingredient))
             shopping_cart += (
                 f"{number}. {ingredient.name} - "
                 f"{ingredient.total_amount} "
                 f"{ingredient.measurement_unit}\n"
             )
-        spisok = 'shopping_cart.txt'
+        shopping_cart_filename = 'shopping_cart.txt'
         response = HttpResponse(shopping_cart, content_type='text/plain')
-        response['Content-Disposition'] = (f'attachment; filename={spisok}')
+        response['Content-Disposition'] = (
+            f'attachment; filename={shopping_cart_filename}'
+        )
         return response
 
     def create_or_destroy(self, request, model, id):
         recipe = get_object_or_404(Recipe, id=id)
-        object = model.objects.filter(user=request.user, recipe__id=recipe.id)
+        model_instance = model.objects.filter(
+            user=request.user, recipe__id=recipe.id
+        )
         if request.method == 'POST':
-            if object.exists():
+            if model_instance.exists():
                 return Response(
                     {'errors': 'Рецепт не был добавлен ранее.'},
                     status=status.HTTP_400_BAD_REQUEST
@@ -87,8 +90,8 @@ class RecipeViewSet(viewsets.ModelViewSet):
             serializer = MinInfoRecipeSerializer()
             return Response(serializer.to_representation(instance=recipe),
                             status=status.HTTP_201_CREATED)
-        if object.exists():
-            object.delete()
+        if model_instance.exists():
+            model_instance.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
         return Response(
             {'errors': 'Рецепт не был добавлен ранее.'},
