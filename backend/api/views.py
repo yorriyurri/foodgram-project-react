@@ -13,7 +13,8 @@ from .permissions import IsAdminOrReadOnly, IsAuthorReadOnly
 from .serializers import (IngredientSerializer, MinInfoRecipeSerializer,
                           RecipeCreateSerializer, RecipeSerializer,
                           TagSerializer)
-from recipes.models import Favorite, Ingredient, Recipe, ShoppingCart, Tag
+from recipes.models import (Favorite, Ingredient, Recipe,
+                            RecipeIngredient, ShoppingCart, Tag)
 
 
 class TagViewSet(viewsets.ReadOnlyModelViewSet):
@@ -53,20 +54,22 @@ class RecipeViewSet(viewsets.ModelViewSet):
         permission_classes=(IsAuthenticated,)
     )
     def download_shopping_cart(self, request):
-        recipes = Recipe.objects.filter(
-            shopping_cart__in=ShoppingCart.objects.filter(user=request.user)
-        )
-        ingredients = Ingredient.objects.filter(
-            recipes_ingredients__recipe__in=recipes
+        ingredients = RecipeIngredient.objects.filter(
+            recipe__shopping_cart__user=request.user
+        ).values_list(
+            'ingredient__name',
+            'ingredient__measurement_unit',
+        ).order_by(
+            'ingredient__name',
         ).annotate(
-            total_amount=Sum('recipes_ingredients__amount')
+            total_amount=Sum('amount')
         )
         shopping_cart = 'Список покупок:\n'
         for number, ingredient in enumerate(ingredients, start=1):
             shopping_cart += (
-                f"{number}. {ingredient.name} - "
-                f"{ingredient.total_amount} "
-                f"{ingredient.measurement_unit}\n"
+                f"{number}. {ingredient[0]} - "
+                f"{ingredient[2]} "
+                f"{ingredient[1]}\n"
             )
         shopping_cart_filename = 'shopping_cart.txt'
         response = HttpResponse(shopping_cart, content_type='text/plain')
