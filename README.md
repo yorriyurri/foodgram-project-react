@@ -77,14 +77,6 @@ docker-compose exec web python manage.py collectstatic --no-input
 docker-compose exec web python manage.py import_ingredients
 ```
 
-### Подключение
-
-Проект доступен по адресу:
-http://51.250.107.24/
-
-логин: admin@yandex.ru
-пароль: adminadmin
-
 ## Автор
 
 Студент 29 когорты Факультета Бэкэнд-разработки, Яндекс.Практикум:
